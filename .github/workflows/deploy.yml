@@ -42,29 +42,21 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
-      - name: Wait for images to be available
-        run: sleep 5
+    - name: Deploy to VM via SSH
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd ~/app
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/dd-task-backend:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/dd-task-frontend:latest
+          docker compose down
+          docker compose up -d --remove-orphans
+          docker image prune -f
 
-      - name: Copy files to server and deploy
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: |
-            docker-compose.yml
-            docker/deploy.sh
-          target: ~/dd-task
 
-      - name: Run deploy script via SSH
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            chmod +x ~/dd-task/deploy.sh
-            ~/dd-task/deploy.sh
