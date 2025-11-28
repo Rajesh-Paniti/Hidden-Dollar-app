@@ -11,7 +11,6 @@ RUN npm run build --prod
 # Nginx Stage
 FROM nginx:stable-alpine
 COPY --from=builder /app/dist/angular-15-crud /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
 
